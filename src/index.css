@@ -5,17 +5,89 @@
 * {
     box-sizing: border-box;
     font-family: 'Karla', sans-serif;
+    background-color: whitesmoke;
 }
 
 main {
     margin: 0 auto;
+    height: 100%;
+    padding: 10px 5px;
     max-width: 900px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .home-page {
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.home-page>h1 {
+    font-size: 4rem;
+}
+
+.home-page>h3 {
+    font-size: 1.5rem;
+}
+
+.home-page>.start-btn {
+    margin-top: 40px;
+    font-size: 1rem;
+}
+
+.questions-number {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.difficulty {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px
 }
 
 .quiz-page {
     text-align: left;
+}
+
+.question-card {
+    padding: 20px 0;
+    border-bottom: 1px solid #DBDEF0;
+}
+
+.answers {
+    padding-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.score {
+    margin: 30px auto;
+    text-align: center;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.wrong-answer {
+    color: black;
+    background-color: #F8BCBC;
+}
+
+.reveal-answer {
+    pointer-events: none;
+    user-select: none;
+    color: grey;
+}
+
+
+.correct-answer {
+    color: black;
+    background-color: #94D7A2;
 }

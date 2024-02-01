@@ -1,94 +1,106 @@
+/* eslint-disable react/prop-types */
 import QuestionCard from "@/components/ui/QuestionCard"
+import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { decode } from 'html-entities'
+import { nanoid } from "nanoid"
 
-function QuizPage() {
-    const { question, correct_answer, incorrect_answers } = {
-        "type": "multiple",
-        "difficulty": "hard",
-        "category": "Science: Computers",
-        "question": "Which of these is not a key value of Agile software development?",
-        "correct_answer": "Comprehensive documentation",
-        "incorrect_answers": [
-            "Individuals and interactions",
-            "Customer collaboration",
-            "Responding to change"
-        ]
+function QuizPage({ questionsNumber, difficulty, homeScreen }) {
+    const [questions, setQuestions] = useState([])
+    const [reveal, setReveal] = useState(false)
+    const [startPlay, setStartPlay] = useState(false)
+
+    useEffect(() => {
+        //console.log("Api called")
+
+        fetch(`https://opentdb.com/api.php?amount=${questionsNumber}&category=18&type=multiple${difficulty != "any" ? "&difficulty=" + difficulty : ""}`)
+            .then(resp => resp.json())
+            .then(data => {
+                if (data["response_code"] === 0) {
+                    const myquestions = transformQuestionResponse(data)
+                    setQuestions(myquestions)
+                }
+            })
+            .catch((err) => console.log(err))
+
+
+        return () => {
+            setStartPlay(false)
+        };
+    }, [startPlay])
+
+    const shuffleArray = (array) => {
+        return array.slice().sort(() => Math.random() - 0.5);
     }
+
+    function transformQuestionResponse(apiResult) {
+        const apiQuestions = apiResult["results"]
+        const questionsAnswers = apiQuestions.map(
+            (questionObj) => {
+                return {
+                    question: decode(questionObj.question),
+                    questionId: nanoid(),
+                    answers: shuffleArray([...questionObj.incorrect_answers.map(
+                        (incorrectAnswer) => {
+                            return {
+                                text: decode(incorrectAnswer),
+                                correct: false
+                            }
+                        }
+                    ), {
+                        text: decode(questionObj.correct_answer),
+                        correct: true
+                    }]),
+                    score: 0
+                }
+            }
+        )
+        return questionsAnswers
+    }
+
+    function checkAnswers() {
+        //console.log("Reveal Score")
+        setReveal(!reveal)
+    }
+    function playAgain() {
+        //console.log("Play Again")
+        setReveal(!reveal)
+        setStartPlay(true)
+    }
+
+    function updateScore(questionIndex, answerIndex) {
+        setQuestions((questions) => {
+            return questions.map(
+                (questionObj, index) => {
+                    if (index === questionIndex) {
+                        return {
+                            ...questionObj,
+                            score: questions[questionIndex].answers[answerIndex].correct ? 1 : 0
+                        }
+                    } else {
+                        return questionObj
+                    }
+                }
+            )
+        })
+    }
+
     return (
         <div className="quiz-page">
-            <QuestionCard questionText={question} correctAnswer={correct_answer} incorrectAnswers={incorrect_answers} />
-            {/* <QuestionCard questionText={question} correctAnswer={correct_answer} incorrectAnswers={incorrect_answers} /> */}
+            {!startPlay &&
+                questions.map((questionObj, index) => {
+                    return <QuestionCard key={questionObj.questionId} reveal={reveal} questionIndex={index} questionText={questionObj.question} answers={questionObj.answers} handleClick={updateScore} />
+                })
+            }
+            <div className="score">
+                {reveal && <p>You scored {questions.reduce((accumulator, currentValue) => accumulator + currentValue.score, 0)}/{questions.length} correct answers </p>}
+                {reveal ?
+                    <Button variant="" onClick={playAgain} >Play again</Button> :
+                    <Button variant="" onClick={checkAnswers} >Check answers</Button>}
+                <Button variant="outline" onClick={() => homeScreen(false)}><i className="fa-solid fa-house"></i></Button>
+            </div>
         </div>
     )
 }
 
 export default QuizPage
-
-/*
-API endpoint: https://opentdb.com/api.php?amount=5&category=18&type=multiple
-Resp:
-{
-    "response_code": 0,
-    "results": [
-        {
-            "type": "multiple",
-            "difficulty": "hard",
-            "category": "Science: Computers",
-            "question": "Which of these is not a key value of Agile software development?",
-            "correct_answer": "Comprehensive documentation",
-            "incorrect_answers": [
-                "Individuals and interactions",
-                "Customer collaboration",
-                "Responding to change"
-            ]
-        },
-        {
-            "type": "multiple",
-            "difficulty": "easy",
-            "category": "Science: Computers",
-            "question": "In web design, what does CSS stand for?",
-            "correct_answer": "Cascading Style Sheet",
-            "incorrect_answers": [
-                "Counter Strike: Source",
-                "Corrective Style Sheet",
-                "Computer Style Sheet"
-            ]
-        },
-        {
-            "type": "multiple",
-            "difficulty": "hard",
-            "category": "Science: Computers",
-            "question": "Which of the following is the oldest of these computers by release date?",
-            "correct_answer": "TRS-80",
-            "incorrect_answers": [
-                "Commodore 64",
-                "ZX Spectrum",
-                "Apple 3"
-            ]
-        },
-        {
-            "type": "multiple",
-            "difficulty": "easy",
-            "category": "Science: Computers",
-            "question": "Which company was established on April 1st, 1976 by Steve Jobs, Steve Wozniak and Ronald Wayne?",
-            "correct_answer": "Apple",
-            "incorrect_answers": [
-                "Microsoft",
-                "Atari",
-                "Commodore"
-            ]
-        },
-        {
-            "type": "multiple",
-            "difficulty": "medium",
-            "category": "Science: Computers",
-            "question": "What is the correct term for the metal object in between the CPU and the CPU fan within a computer system?",
-            "correct_answer": "Heat Sink",
-            "incorrect_answers": [
-                "CPU Vent",
-                "Temperature Decipator",
-                "Heat Vent"
-            ]
-        }
-    ]
-}
-*/

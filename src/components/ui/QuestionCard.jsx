@@ -1,58 +1,77 @@
 /* eslint-disable no-unused-vars */
 import { useEffect, useState } from "react"
 import { Button } from "./button"
-import { nanoid } from 'nanoid'
 
 /* eslint-disable react/prop-types */
-function QuestionCard({ questionText, correctAnswer, incorrectAnswers }) {
-
-    // Randomize
-    const answers = [...incorrectAnswers, correctAnswer]
-    const [answersState, setAnswersState] = useState([])
-    useEffect(
-        () => {
-            for (const answer of answers) {
-                setAnswersState((prevState) => {
-                    return [
-                        ...prevState,
-                        {
-                            id: nanoid(),
-                            text: answer,
-                            selected: false,
-                            variantType: "outline"
-                        }
-                    ]
-
-                })
+function QuestionCard({ reveal, questionIndex, questionText, answers, handleClick }) {
+    const [answersState, setAnswersState] = useState(answers.map(
+        (answer) => {
+            return {
+                ...answer,
+                selected: false,
+                className: ""
             }
         }
-        , [])
-
-    console.log(answersState)
-    function checkAnswer(answer) {
-        if (answer === correctAnswer) {
-            console.log("Correct answer selected!")
-        }
-    }
-    // let variantType = "outline"
+    ))
     function handleSubmit(id) {
-        setAnswersState((prevState) => prevState.map(
-            (answerObj) => {
-                return answerObj.id === id ? { ...answerObj, variantType: switchVariantType(answerObj.variantType) } : answerObj
+        handleClick(questionIndex, id)
+        setAnswersState((answers) => {
+            return answers.map(
+                (answer, index) => {
+                    if (index === id) {
+                        return {
+                            ...answer,
+                            selected: true
+                        }
+                    } else {
+                        return {
+                            ...answer,
+                            selected: false
+                        }
+                    }
+                }
+            )
+        })
+    }
+
+    useEffect(() => {
+        if (reveal) {
+            setAnswersState((answers) => {
+                return answers.map(
+                    (answer) => {
+                        if (answer.selected && answer.correct) {
+                            return {
+                                ...answer,
+                                className: "reveal-answer correct-answer"
+                            }
+                        } else if (answer.selected && !answer.correct) {
+                            return {
+                                ...answer,
+                                className: "reveal-answer wrong-answer"
+                            }
+                        } else if (!answer.selected && answer.correct) {
+                            return {
+                                ...answer,
+                                className: "reveal-answer correct-answer"
+                            }
+                        } else {
+                            return {
+                                ...answer,
+                                className: "reveal-answer"
+                            }
+                        }
+                    }
+                )
             })
-        )
-        // variantType = ""
-        console.log("clicked")
-    }
-    function switchVariantType(currentType) {
-        return currentType === "" ? "outline" : ""
-    }
+        }
+    }, [reveal])
+
     return (
-        <div className="quesiton-card">
+        <div className="question-card">
             <p>{questionText}</p>
             <div className="answers">
-                {answersState.map((answer) => {
-                    return <Button key={answer.id} variant={answer.variantType} onClick={() => handleSubmit(answer.id)}>{answer.text}</Button>
+                {answersState.map((answer, index) => {
+                    return <Button key={"a-" + index} className={answer.className} variant={answer.selected ? "" : "outline"} onClick={() => handleSubmit(index)}>{answer.text}</Button>
                 })}
             </div>
         </div>
